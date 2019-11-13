@@ -1,0 +1,17 @@
+%%%--------------------------MODEL DESCRIPTION--------------------------%%%
+Simple multiexponential kinetic model for trace analysis.
+isCCF makes amplitudes positive or negative.
+A1*exp(-t/tau1)+A2*exp(-t/tau2)+A3*exp(-t/tau3)+offset
+%%%-------------------------PARAMETER DEFINITION------------------------%%%
+Param(1): A1             = 1;     LB = 0;   UB = Inf;
+Param(2): tau1     = 1;   LB = 0;	UB = Inf;   
+Param(3): A2      = 1;   LB = 0;	UB = Inf;
+Param(4): tau2       = 10;	LB = 0;   UB = Inf;
+Param(5): A3      = 0;	LB = 0;   UB = Inf;f
+Param(6): tau3          = 100;  LB = 0;	UB = Inf;f
+Param(7): y0            = 0;     LB = -100;  UB = 100;
+Param(8): isCCF = 0;    LB = 0; UB = 1;f
+%%%------------------------BRIGHTNESS DEFINITION------------------------%%%
+B=1/P(1); 
+%%%-----------------------------FIT FUNCTION----------------------------%%%  
+OUT= (1-2*P(8))*(P(1)*exp(-x/P(2))+P(3)*exp(-x/P(4))+P(5)*exp(-x/P(6)))+P(7);
