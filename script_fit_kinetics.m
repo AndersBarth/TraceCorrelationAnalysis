@@ -1,12 +1,13 @@
+addpath(genpath(fileparts(matlab.desktop.editor.getActiveFilename)));
 % load data
 % 1 = LF, 2 = MF, 3 = HF
 % order:
 % 1x1, 2x2, 3x3, 1x2, 1x3, 2x1, 2x3, 3x1, 3x2
-fn = 'sim_190212_194543_level1';
+fn = 'sim_level2_final_publish';
 linear = false;
-stepfinding = false;
+stepfinding = true;
 use_weights = true;
-n_states = 2;
+n_states = 3;
 if linear
     ext = '_lin';
 else
@@ -104,7 +105,7 @@ switch n_states
          if stepfinding
             fun = @(x,method) FCS_two_state_kinetics_fFCS(x,t,Cor_Average,Cor_SEM,method);
          else %default to colorFCS
-            fitE = true;
+            fitE = false;
             if fitE
                 fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,0,0,t,Cor_Average,Cor_SEM,method);
                 k0 = [k0,rand(1,2)]; lb = [lb,0,0]; ub = [ub,1,1];
@@ -114,13 +115,24 @@ switch n_states
             end
          end
 end
-method = 2;
+method = 1;
 switch method
      case 1 % lsqnonlin
+        % first fit simplex
+        options = optimset('MaxFunEvals',1E7,'MaxIter',1E7);
+        k = fminsearchbnd(@(x) fun(x,2),k0,lb,ub,options);
+        % then refine
         [k,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(@(x) fun(x,method),k0,lb,ub);
-     case 2
+        % get error from nlparci
+        ci = nlparci(k,residual,'jacobian',jacobian);
+    case 2
         options = optimset('MaxFunEvals',1E7,'MaxIter',1E7);
         k = fminsearchbnd(@(x) fun(x,method),k0,lb,ub,options);
+        % use lsqnonlin to estimate errors
+        options = optimset('MaxIter',1);
+        [k,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(@(x) fun(x,1),k,lb,ub);
+        % get error from nlparci
+        ci = nlparci(k,residual,'jacobian',jacobian);
 end
 
 [w_res,C] = fun(k,1);
@@ -128,9 +140,12 @@ end
 mcmc = false;
 if mcmc % do Markov Chain Monte Carlo
     logpdf = @(x) (-1)*fun(x,2);
-    [smpl, accept] = mhsample(k,1E6,'logpdf',logpdf,'proprnd',@(x) normrnd(x,0.001),'symmetric',true);
+    [smpl, accept] = mhsample(k,1E6,'logpdf',logpdf,'proprnd',@(x) normrnd(x,0.0001),'symmetric',true);
     mean_k = mean(smpl,1);
     std_k = std(smpl,1);
+    for i = 1:size(smpl,1);
+        p(i) = logpdf(smpl(i,:));
+    end
 end
 
 real_solution = false;
@@ -149,8 +164,13 @@ colors = hsv(n_states^2);
 figure('Color',[1,1,1]);
 ax = axes('Color',[1,1,1],'LineWidth',2,'FontSize',20,'Box','on');
 hold on;
+error_bar_plot = true;
 for i = 1:(n_states^2)
-    semilogx(t,Cor_Average(:,i),'.','MarkerSize',10,'Color',colors(i,:));
+    if error_bar_plot
+        errorbar(t,Cor_Average(:,i),Cor_SEM(:,i),'.','MarkerSize',10,'Color',colors(i,:));
+    else
+        semilogx(t,Cor_Average(:,i),'.','MarkerSize',10,'Color',colors(i,:));
+    end
     semilogx(t,C(:,i),'LineWidth',2,'Color',colors(i,:));
 end
 ax.XScale = 'log';
@@ -158,9 +178,9 @@ ax.XScale = 'log';
 
 switch n_states
     case 3
-        legend(flipud(ax.Children(1:2:end)),{'LFxLF','MFxMF','HFxHF','LFxMF','LFxHF','MFxLF','MFxHF','HFxLF','HFxMF'},'FontSize',8);
+        legend(flipud(ax.Children(1:2:end)),{'LFxLF','MFxMF','HFxHF','LFxMF','LFxHF','MFxLF','MFxHF','HFxLF','HFxMF'},'FontSize',12);
     case 2
-        legend(flipud(ax.Children(1:2:end)),{'LFxLF','HFxHF','LFxHF','HFxLF'},'FontSize',8);
+        legend(flipud(ax.Children(1:2:end)),{'LFxLF','HFxHF','LFxHF','HFxLF'},'FontSize',12);
 end
 ax.Position(4) = ax.Position(4)*0.8;
 ax_res = axes('ColorOrder',jet(9),'Color',[1,1,1],'LineWidth',2,'FontSize',20,'XTickLabel',[],'Box','on',...

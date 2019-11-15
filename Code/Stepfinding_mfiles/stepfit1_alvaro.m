@@ -22,7 +22,7 @@ Fs=1;
 tau=0;
 evalc('outputnoise=noise_std(data)');
 measnoise=0;
-passes=10;
+passes=20;
 verbose=0;
 for i=1:2:numarg
     msg=[varargin{i} '=' num2str(varargin{i+1})];

@@ -1,9 +1,12 @@
 %%% perform Gaussian fitting of FRET histogram
-stepfinding = false;
-save = false;
-fn = 'sim_level1_final_publish';
+stepfinding = true;
+save_figures = true;
+fn = 'sim_level2_final_publish';
 load([fn '.mat']);
-n = 2;
+if stepfinding
+    load([fn '_results' filesep fn '_eff_steps.mat']);
+end
+n = 3;
 if stepfinding
     E = eff_steps; % assume that we just analyzed the dataset
 else
@@ -20,13 +23,24 @@ for i = 1:n_comp % consider up to four states
     AIC(i) = fits{i}.AIC;
 end
 %%
-bins = linspace(-0.1,1.1,101);
+bins = linspace(-0.25,1.25,151);
 f = figure; hold on;
 [h,bins_edges] = histcounts(E,bins); bins = bins_edges(1:end-1) + min(diff(bins_edges))/2;
 bar(bins,h,'EdgeColor','none','BarWidth',1,'FaceColor',[0.5,0.5,0.5]);
 if ~stepfinding
     p = pdf(fits{n},bins'); p = numel(E).*p./sum(p);
-    plot(bins,p,'LineWidth',2,'Color',[0,0,0]);  
+    plot(bins,p,'LineWidth',2,'Color',[0,0,0]);
+    %%% add individual populations
+    if n > 1
+        mu = fits{n}.mu;
+        sigma = fits{n}.Sigma;
+        amp = fits{n}.ComponentProportion;
+        for i = 1:n
+            p_ind = pdf(gmdistribution(mu(i),sigma(i)),bins');
+            p_ind = numel(E).*amp(i).*p_ind./sum(p_ind);
+            plot(bins,p_ind,'--','LineWidth',2,'Color',[0.25,0.25,0.25]);
+        end
+    end
 else
     color = lines(3);
     if n == 2
@@ -49,25 +63,27 @@ if ~stepfinding
     linkaxes([ax,ax_res],'x');
 
     w_res = (p-h')./sqrt(h');
-    plot(ax_res,bins,w_res,'LineWidth',2);
+    plot(ax_res,bins,w_res,'LineWidth',2,'Color',[0,0,0]);
     set(gca,'Box','on','FontSize',20,'LineWidth',2,'Layer','top');
     ylabel('w. res.');
-    ax_res.XTickLabel = [];
-    ax_res.Position(2) = ax.Position(2)+ax.Position(4);
+    ax_res.XTickLabel = [];   
+    ax_res.Position(2) = 0.835;%(ax.Position(2)+ax.Position(4));
     ax_res.Position(4) = 0.1;
     axis('tight');
-
+    ax.YTickMode = 'auto'; ax.YTickLabelMode = 'auto';
     switch n
         case 2
             text(ax,ax.XLim(1)+0.1,ax.YLim(2)*0.85,sprintf('E_1 = %.2f\nE_2 = %.2f',fits{n}.mu),'FontSize',20);
         case 3
-            text(ax,ax.XLim(1)+0.1,ax.YLim(2)*0.8,sprintf('E_1 = %.2f\nE_2 = %.2f\nE_3=%.2f',fits{n}.mu),'FontSize',20);
+            text(ax,ax.XLim(1)+0.1,ax.YLim(2)*0.8,sprintf('E_1 = %.2f\nE_2 = %.2f\nE_3 = %.2f',fits{n}.mu),'FontSize',20);
     end
 end
-if save
+if save_figures
     if ~stepfinding
         print(f,[fn '_E.png'],'-dpng');
+        savefig(f,[fn '_E.fig']);
     else
         print(f,[fn '_E_sf.png'],'-dpng');
+        savefig(f,[fn '_E_sf.fig']);
     end
 end

@@ -7,6 +7,7 @@ function [w_res,C] = FCS_three_state_kinetics(rates,t,cor,sem,method)
 %     0.11	-0.5	0.39;... %k21 k22 k23
 %     0.06	0.4	-0.46]; %k31 k32 k33
     if any(rates < 0)
+        % can only happen during MCMC sampling
         w_res = Inf;
         return;
     end
@@ -21,6 +22,20 @@ function [w_res,C] = FCS_three_state_kinetics(rates,t,cor,sem,method)
     end
     K = K';
     lambda = eig(K); %eigenvalues
+    
+    %check for complex eigenvalues
+    if any(~isreal(lambda))
+        % not a valid solution, return inf
+        switch method
+            case 1
+                % lsqnonlin, return array
+                w_res = Inf(size(cor));
+            case 2
+                w_res = Inf;
+        end
+        return;
+    end
+    
     [U,~] = eig(K);
     [~,idx] = sort(abs(lambda));
     lambda = lambda(idx);
@@ -38,7 +53,7 @@ function [w_res,C] = FCS_three_state_kinetics(rates,t,cor,sem,method)
     left = U';
     right = V;
     lambda = lambda(2:end);
-
+    
     % calculate correlation amplitudes
     G = zeros(numel(K),numel(lambda));
     s1 = [1,0,0]'; s2 = [0,1,0]'; s3 = [0,0,1]';
