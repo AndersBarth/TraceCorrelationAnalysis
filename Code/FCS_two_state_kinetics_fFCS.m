@@ -11,8 +11,8 @@ function [w_res,C] = FCS_two_state_kinetics_fFCS(rates,t,cor,sem,method)
     
     % compute ideal FCS curves
     C = zeros(numel(t),4);
-    C(:,1) = (k21/k12)*exp(-(k12+k21).*t)+offset(1); %DxD
-    C(:,2) = (k12/k21)*exp(-(k12+k21).*t)+offset(2); %AxA
+    C(:,1) = (k12/k21)*exp(-(k12+k21).*t)+offset(1); %DxD
+    C(:,2) = (k21/k12)*exp(-(k12+k21).*t)+offset(2); %AxA
     C(:,3) = -exp(-(k12+k21).*t)+offset(3); %DxA
     C(:,4) = -exp(-(k12+k21).*t)+offset(4); %AxD
     
