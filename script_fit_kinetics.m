@@ -5,10 +5,10 @@ addpath(genpath(fileparts(matlab.desktop.editor.getActiveFilename)));
 % 1x1, 2x2, 3x3, 1x2, 1x3, 2x1, 2x3, 3x1, 3x2
 fn = 'sim_level3_final_publish';
 linear = false;
-stepfinding = true;
+stepfinding = true; 
 use_weights = true;
 n_states = 2;
-degenerate = 4; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
+degenerate = 3; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
 if linear
     ext = '_lin';
 else
@@ -183,10 +183,13 @@ if mcmc % do Markov Chain Monte Carlo
     logpdf = @(x) (-1)*fun(x,2);
     [smpl, accept] = mhsample(k,1E4,'logpdf',logpdf,'proprnd',@(x) normrnd(x,ci'/10),'symmetric',true,'thin',100);
     k_mcmc = mean(smpl,1);
-    ci_mcmc = 1.96*std(smpl,1);
-    for i = 1:size(smpl,1);
-        p(i) = logpdf(smpl(i,:));
-    end
+    % asymmetric confidence intervals
+    alpha = 0.05; % 95%
+    ci_mcmc = prctile(smpl,100*[alpha/2,1-alpha/2],1);
+    %ci_mcmc = 1.96*std(smpl,1);
+    %for i = 1:size(smpl,1);
+    %    p(i) = logpdf(smpl(i,:));
+    %end
     plot_mcmc = true;
     if plot_mcmc
         if ~(stepfinding && degenerate)

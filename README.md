@@ -6,7 +6,7 @@ Anders Barth, Claus Seidel
 ## Analysis workflow
 All analysis was done in MATLAB. The code is hosted in a [git repository](https://github.com/AndersBarth/TraceCorrelationAnalysis).
 ### Determination of FRET efficiencies
-The minimal number of states and their FRET efficiencies are determined by Gaussian fitting of frame-wise FRET efficiency histograms.
+The minimal number of states and their FRET efficiencies are determined by Gaussian fitting of frame-wise FRET efficiency histograms. We used a Gaussian mixture model as implemented in the `fitgmdist`, based on an iterative Expectation-Maximization algorithm of the likelihood function.
 ### Analysis of kinetics
 We employ fluorescence correlation spectroscopy to analyze the time traces of donor and fluorescence signal. Three different approaches are used:
 
@@ -14,18 +14,28 @@ We employ fluorescence correlation spectroscopy to analyze the time traces of do
 2. "filtered-FCS" analysis - By preceding the analysis by a step-finding algorithm, states are identified and the resulting state trajectories are correlated
 
 ### Step-finding algorithm
-We apply the algorithm presented by (Aggarwal, 2012)[][#Salapaka] to identify steps in the FRET efficiency traces. The algorithm does not assume any particular kinetic scheme but estimates the optimal number of steps based on the noise of the signal. Overfitting avoided by introducing a penalty for each transition. For the analysis, we set an estimated noise of $\sigma_E$ = 0.05. An exemplary result of the step-finding is shown in Figure 1.
+We apply the algorithm presented by (Aggarwal, 2012)[][#Salapaka] to identify steps in the FRET efficiency traces. The algorithm does not assume any particular kinetic scheme but estimates the optimal number of steps based on the noise of the signal. Overfitting avoided by introducing a penalty for each transition. For the analysis, we set an estimated noise of based on the distribution width obtained from the Gaussian fitting analysis ($\sigma_E$ = 0.05-0.1). An exemplary result of the step-finding is shown in Figure 1.
 
 /Test_Datasets/step_finding_example.png "Figure 1: Example of the step-finding algorithm. The idealized signal trajectory (black) is estimated from the noisy data (gray). Thresholds for the digitizations of the FRET efficiency trajectory into states are shown as dashed lines."
 
+After the step finding, the stepwise FRET efficiency histograms were examined to identify thresholds to digitize the FRET efficiency trajectory.
+
+/Challenge Datasets/sim_level2_final_publish_E_combined.png "Figure 2: FRET efficiency histograms of challenge dataset 2 before (left) and after (right) applying the step finding. Dashed lines indicate the used thresholds."
+
 ## FCS model function
-### 1. Color-FCS
+### Color-FCS
 For two-state dynamics, analytical functions are known for the color-FCS curves:
 
-$$ G_{GG}(\tau) = 
+\\[ G_{GG}(\tau) = \frac{k_{12}k_{21}\Delta E^2}{(k_{12}(1-E_1)+k_{21}(1-E_2))^2}\exp(-(k_{12}+k_{21})\tau) \\]
 
-### 2. step-finding FCS
-In filtered-FCS, the correlation functions are obtained directly from the matrix exponential of the transition rate matrix:
+\\[ G_{RR}(\tau) = \frac{k_{12}k_{21}\Delta E^2}{(k_{12}E_1+k_{21}E_2)^2}\exp(-(k_{12}+k_{21})\tau)\\]
+
+\\[ G_{GR}(\tau) = G_{RG}(\tau) = -\frac{k_{12}k_{21}\Delta E^2}{(k_{12}(1-E_1)+k_{21}(1-E_2))(k_{12}E_1+k_{21}E_2)}\exp(-(k_{12}+k_{21})\tau)\\]
+
+### step-finding FCS
+In step-finding-FCS, the correlation functions represent the "filtered" correlation functions of the pure states. For the two state case, the analytical functions are given by:
+
+The analytical functions are obtained directly from the matrix exponential of the transition rate matrix:
 
 ## Analysis results
 ### Test datasets

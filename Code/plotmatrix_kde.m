@@ -149,12 +149,14 @@ for i=rows:-1:1
         else
             ax(i,j) = findax(1);
         end
-        [fi,xi] = ksdensity([x(:,j),y(:,i)]);        
-        [~,hh(i,j,:)] = contour(reshape(xi(:,1),[30,30]),reshape(xi(:,2),[30,30]),reshape(fi,[30,30]));
-        %plot(reshape(x(:,j,:),[m k]), ...
-            %reshape(y(:,i,:),[m k]),sym,'parent',ax(i,j))';
-        %set(hh(i,j,:),'markersize',markersize);
-        set(ax(i,j),'xlimmode','auto','ylimmode','auto','xgrid','off','ygrid','off')
+        hold on;
+        [fi,xi] = ksdensity([x(:,j),y(:,i)]);
+        fi = fi./max(fi);
+        levels = [0.05,0.1:0.1:1];
+        plot(reshape(x(:,j,:),[m k]), ...
+           reshape(y(:,i,:),[m k]),sym,'parent',ax(i,j),'markersize',markersize,'Color',0.75*[1,1,1])';
+        [~,hh(i,j,:)] = contour(reshape(xi(:,1),[30,30]),reshape(xi(:,2),[30,30]),reshape(fi,[30,30]),levels);
+        set(ax(i,j),'xlimmode','auto','ylimmode','auto','xgrid','off','ygrid','off','Box','on')
         xlim(i,j,:) = get(ax(i,j),'xlim');
         ylim(i,j,:) = get(ax(i,j),'ylim');
         
