@@ -3,12 +3,12 @@ addpath(genpath(fileparts(matlab.desktop.editor.getActiveFilename)));
 % 1 = LF, 2 = MF, 3 = HF
 % order:
 % 1x1, 2x2, 3x3, 1x2, 1x3, 2x1, 2x3, 3x1, 3x2
-fn = 'sim_level3_final_publish';
+fn = 'sim_190213_192923_level3';
 linear = false;
 stepfinding = true; 
 use_weights = true;
 n_states = 2;
-degenerate = 3; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
+degenerate = 2; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
 if linear
     ext = '_lin';
 else
@@ -117,19 +117,19 @@ switch n_states
                  switch degenerate
                      case 1
                          % try 1 exp fit
-                         k0 = ones(1,3);
+                         k0 = 0.1*ones(1,3);
                          lb = zeros(1,3);
                          ub = inf(1,3);
                          fun = @(x,method) FCS_two_state_kinetics_fFCS_oneexp(x,t,Cor_Average,Cor_SEM,method);
                      case 2
                          % try 2 exp fit
-                         k0 = ones(1,7);
+                         k0 = 0.1*ones(1,7);
                          lb = zeros(1,7);
                          ub = inf(1,7);
                          fun = @(x,method) FCS_two_state_kinetics_fFCS_biexp(x,t,Cor_Average,Cor_SEM,method);
                      case 3
                          % try 3 exp fit
-                         k0 = ones(1,11);
+                         k0 = [10*ones(1,3),ones(1,8)];;
                          lb = zeros(1,11);
                          ub = inf(1,11);
                          fun = @(x,method) FCS_two_state_kinetics_fFCS_threeexp(x,t,Cor_Average,Cor_SEM,method);
@@ -147,9 +147,9 @@ switch n_states
                 fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,0,0,t,Cor_Average,Cor_SEM,method);
                 k0 = [k0,rand(1,2)]; lb = [lb,0,0]; ub = [ub,1,1];
             else
-                % E1 = 0.31; E2 = 0.70;
-                % E1 = 0.24; E2 = 0.72;
-                E1 = 0.18; E2 = 0.73;
+                %E1 = 0.31; E2 = 0.70;
+                 E1 = 0.24; E2 = 0.72;
+                %E1 = 0.18; E2 = 0.73;
                 fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,E1,E2,t,Cor_Average,Cor_SEM,method);
             end
          end
@@ -178,10 +178,10 @@ end
 
 [w_res,C] = fun(k,1);
 
-mcmc = true;
+mcmc = false;
 if mcmc % do Markov Chain Monte Carlo
     logpdf = @(x) (-1)*fun(x,2);
-    [smpl, accept] = mhsample(k,1E4,'logpdf',logpdf,'proprnd',@(x) normrnd(x,ci'/10),'symmetric',true,'thin',100);
+    [smpl, accept] = mhsample(k,1E3,'logpdf',logpdf,'proprnd',@(x) normrnd(x,ci'/10),'symmetric',true,'thin',100);
     k_mcmc = mean(smpl,1);
     % asymmetric confidence intervals
     alpha = 0.05; % 95%
@@ -309,7 +309,7 @@ elseif n_states == 2
     k
 end
 % compute BIC
-BIC = chi2_to_bic(-0.5*fun(k,2),numel(k),numel(C));
+BIC = chi2_to_bic(fun(k,2),numel(k),numel(C));
 disp(sprintf('The BIC is: %.2f',BIC));
 disp(sprintf('Red. Chi2 is: %.2f',sum(w_res(:).^2)./(numel(C)-numel(k))));
 %confint = nlparci(k,residual,'jacobian',jacobian);
