@@ -1,7 +1,7 @@
 %%% perform Gaussian fitting of FRET histogram
-stepfinding = true;
-save_figures = true;
-fn = 'sim_level2_final_publish';
+stepfinding = false;
+save_figures = false;
+fn = 'sim_level3_final_publish';
 load([fn '.mat']);
 if stepfinding
     load([fn '_results' filesep fn '_eff_steps.mat']);
@@ -34,12 +34,13 @@ if ~stepfinding
     if n > 1
         mu = fits{n}.mu;
         sigma = fits{n}.Sigma;
-        amp = fits{n}.ComponentProportion;
+        amp = fits{n}.ComponentProportion';
         for i = 1:n
             p_ind = pdf(gmdistribution(mu(i),sigma(i)),bins');
             p_ind = numel(E).*amp(i).*p_ind./sum(p_ind);
             plot(bins,p_ind,'--','LineWidth',2,'Color',[0.25,0.25,0.25]);
         end
+        sigma = sqrt(squeeze(sigma));
     end
 else
     color = lines(3);
@@ -63,6 +64,8 @@ if ~stepfinding
     linkaxes([ax,ax_res],'x');
 
     w_res = (p-h')./sqrt(h');
+    valid = isfinite(w_res);
+    chi2 = sum(w_res(valid).^2)./(numel(valid)-3*numel(mu));
     plot(ax_res,bins,w_res,'LineWidth',2,'Color',[0,0,0]);
     set(gca,'Box','on','FontSize',20,'LineWidth',2,'Layer','top');
     ylabel('w. res.');

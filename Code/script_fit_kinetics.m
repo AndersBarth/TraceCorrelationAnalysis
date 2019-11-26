@@ -8,7 +8,7 @@ linear = false;
 stepfinding = true; 
 use_weights = true;
 n_states = 2;
-degenerate = 2; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
+degenerate = 3; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
 if linear
     ext = '_lin';
 else
@@ -129,7 +129,7 @@ switch n_states
                          fun = @(x,method) FCS_two_state_kinetics_fFCS_biexp(x,t,Cor_Average,Cor_SEM,method);
                      case 3
                          % try 3 exp fit
-                         k0 = [10*ones(1,3),ones(1,8)];;
+                         k0 = [1,5,10,ones(1,8)];;
                          lb = zeros(1,11);
                          ub = inf(1,11);
                          fun = @(x,method) FCS_two_state_kinetics_fFCS_threeexp(x,t,Cor_Average,Cor_SEM,method);
@@ -147,21 +147,21 @@ switch n_states
                 fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,0,0,t,Cor_Average,Cor_SEM,method);
                 k0 = [k0,rand(1,2)]; lb = [lb,0,0]; ub = [ub,1,1];
             else
-                %E1 = 0.31; E2 = 0.70;
-                 E1 = 0.24; E2 = 0.72;
+                E1 = 0.31; E2 = 0.70;
+                %E1 = 0.24; E2 = 0.72;
                 %E1 = 0.18; E2 = 0.73;
                 fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,E1,E2,t,Cor_Average,Cor_SEM,method);
             end
          end
 end
-method = 2;
+method = 1;
 switch method
      case 1 % lsqnonlin
         % first fit simplex
         options = optimset('MaxFunEvals',1E7,'MaxIter',1E7);
         k = fminsearchbnd(@(x) fun(x,2),k0,lb,ub,options);
         % then refine
-        [k,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(@(x) fun(x,method),k0,lb,ub);
+        [k,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(@(x) fun(x,method),k0,lb,ub,options);
         % get error from nlparci
         ci = nlparci(k,residual,'jacobian',jacobian);
         ci = (ci(:,2)-ci(:,1))/2;
@@ -170,7 +170,7 @@ switch method
         k = fminsearchbnd(@(x) fun(x,method),k0,lb,ub,options);
         % use lsqnonlin to estimate errors
         options = optimset('MaxIter',1);
-        [k,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(@(x) fun(x,1),k,lb,ub);
+        [k,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(@(x) fun(x,1),k,lb,ub,options);
         % get error from nlparci
         ci = nlparci(k,residual,'jacobian',jacobian);   
         ci = (ci(:,2)-ci(:,1))/2;
@@ -275,8 +275,9 @@ for i = 1:(n_states^2)
     semilogx(t,C(:,i),'LineWidth',2,'Color',colors(i,:));
 end
 ax.XScale = 'log';
-
-
+ax.XLabel.String = 'Time Lag \tau [s]';
+ax.YLabel.String = 'G(\tau)';
+axis tight;
 switch n_states
     case 3
         legend(flipud(ax.Children(1:2:end)),{'LFxLF','MFxMF','HFxHF','LFxMF','LFxHF','MFxLF','MFxHF','HFxLF','HFxMF'},'FontSize',12);
