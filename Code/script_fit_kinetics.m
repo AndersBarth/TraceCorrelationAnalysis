@@ -3,14 +3,14 @@ addpath(genpath(fileparts(matlab.desktop.editor.getActiveFilename)));
 % 1 = LF, 2 = MF, 3 = HF
 % order:
 % 1x1, 2x2, 3x3, 1x2, 1x3, 2x1, 2x3, 3x1, 3x2
-fn = 'sim_level3_final_publish';
+fn = 'sim_level2_final_publish';
 linear = false;
 stepfinding = true; 
 use_weights = true;
-n_states = 2;
-degenerate = 4; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
+n_states = 3;
+degenerate = 0; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
 mcmc = true;
-timestep_factor = 2;
+timestep_factor = 1;
 if linear
     ext = '_lin';
 else
