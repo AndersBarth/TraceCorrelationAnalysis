@@ -3,12 +3,14 @@ addpath(genpath(fileparts(matlab.desktop.editor.getActiveFilename)));
 % 1 = LF, 2 = MF, 3 = HF
 % order:
 % 1x1, 2x2, 3x3, 1x2, 1x3, 2x1, 2x3, 3x1, 3x2
-fn = 'sim_190213_192923_level3';
+fn = 'sim_level3_final_publish';
 linear = false;
 stepfinding = true; 
 use_weights = true;
 n_states = 2;
-degenerate = 3; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
+degenerate = 4; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
+mcmc = true;
+timestep_factor = 2;
 if linear
     ext = '_lin';
 else
@@ -67,7 +69,7 @@ end
         Cor_SEM(1:numel(d.Cor_SEM),end) = d.Cor_SEM;
     end
  end
- t = Cor_Times(:,1);
+ t = Cor_Times(:,1)*timestep_factor;
  valid = t < 150;
  t = t(valid);
  Cor_Average = Cor_Average(valid,:);
@@ -147,9 +149,9 @@ switch n_states
                 fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,0,0,t,Cor_Average,Cor_SEM,method);
                 k0 = [k0,rand(1,2)]; lb = [lb,0,0]; ub = [ub,1,1];
             else
-                E1 = 0.31; E2 = 0.70;
+                %E1 = 0.31; E2 = 0.70;
                 %E1 = 0.24; E2 = 0.72;
-                %E1 = 0.18; E2 = 0.73;
+                E1 = 0.18; E2 = 0.73;
                 fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,E1,E2,t,Cor_Average,Cor_SEM,method);
             end
          end
@@ -178,10 +180,9 @@ end
 
 [w_res,C] = fun(k,1);
 
-mcmc = false;
 if mcmc % do Markov Chain Monte Carlo
     logpdf = @(x) (-1)*fun(x,2);
-    [smpl, accept] = mhsample(k,1E3,'logpdf',logpdf,'proprnd',@(x) normrnd(x,ci'/10),'symmetric',true,'thin',100);
+    [smpl, accept] = mhsample(k,1E4,'logpdf',logpdf,'proprnd',@(x) normrnd(x,ci'/10),'symmetric',true,'thin',100);
     k_mcmc = mean(smpl,1);
     % asymmetric confidence intervals
     alpha = 0.05; % 95%
@@ -295,6 +296,7 @@ end
 ax_res.XScale = 'log';
 linkaxes([ax,ax_res],'x');
 
+ax.XLim(1) = t(1);
 ax.XLim(2) = t(end);
 if stepfinding
     ax.YLim(1) = -1.1;
