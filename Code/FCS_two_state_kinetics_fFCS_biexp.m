@@ -13,13 +13,17 @@ function [w_res,C] = FCS_two_state_kinetics_fFCS_biexp(fit_parameters,t,cor,sem,
     A1_22= fit_parameters(5);
     A2_22= fit_parameters(6);
     A1_12= fit_parameters(7);
-    
+    if numel(fit_parameters) > 7 % offset
+        offset = fit_parameters(8:end);
+    else
+        offset = zeros(1,4);
+    end
     % compute ideal FCS curves
     C = zeros(numel(t),4);
-    C(:,1) = A1_11*exp(-t./tau1)+A2_11*exp(-t./tau2); %DxD
-    C(:,2) = A1_22*exp(-t./tau1)+A2_22*exp(-t./tau2); %AxA
-    C(:,3) = -(A1_12*exp(-t./tau1)+(1-A1_12)*exp(-t./tau2)); %DxA
-    C(:,4) = -(A1_12*exp(-t./tau1)+(1-A1_12)*exp(-t./tau2)); %AxD
+    C(:,1) = A1_11*exp(-t./tau1)+A2_11*exp(-t./tau2)+offset(1); %DxD
+    C(:,2) = A1_22*exp(-t./tau1)+A2_22*exp(-t./tau2)+offset(2); %AxA
+    C(:,3) = -(A1_12*exp(-t./tau1)+(1-A1_12)*exp(-t./tau2))+offset(3); %DxA
+    C(:,4) = -(A1_12*exp(-t./tau1)+(1-A1_12)*exp(-t./tau2))+offset(4); %AxD
     
     % compute residuals
     w_res = (C-cor)./sem; w_res(isnan(w_res)) = 0;

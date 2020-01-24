@@ -1,6 +1,6 @@
 %% load dataset
-filename = 'sim_level3_final_publish';
-n_states = 2;
+filename = 'expSet2';
+n_states = 3;
 time_res = 0.1;
 step_finding = true;
 linear = false;
@@ -32,7 +32,7 @@ if step_finding
     for i = 1:numel(E)
         %disp(sprintf('Processing trace %d\n',i));
         try % stepfinding sometimes failes
-            E_steps{i} = stepfit1_alvaro(E{i},'outputnoise',0.09)'; % outputnoise should be estimated from gaussian fitting
+            E_steps{i} = stepfit1_alvaro(E{i},'outputnoise',0.08)'; % outputnoise should be estimated from gaussian fitting
         end
     end
     E_steps = E_steps(~cellfun(@isempty,E_steps));
@@ -69,7 +69,7 @@ switch n_states
             save_to_fcsfit('HF','LF',[pwd filesep folder],[filename '_stepfinding'],t,c,e,ca);
         end
     case 3
-        threshold1 = 0.3; threshold2 = 0.72;
+        threshold1 = 0.4; threshold2 = 0.8;
         lf = cellfun(@(x) double(x < threshold1), E, 'UniformOutput',false);
         mf = cellfun(@(x) double(x >= threshold1 & x < threshold2), E, 'UniformOutput',false);
         hf = cellfun(@(x) double(x >= threshold2), E, 'UniformOutput',false);
@@ -93,7 +93,7 @@ switch n_states
         save_to_fcsfit('HF','MF',[pwd filesep folder],filename,t,c,e,ca);
         
         if step_finding
-            threshold1 = .3; threshold2 = .7;            
+            %threshold1 = .3; threshold2 = .7;            
             lf = cellfun(@(x) double(x < threshold1), E_steps, 'UniformOutput',false);
             mf = cellfun(@(x) double(x >= threshold1 & x < threshold2), E_steps, 'UniformOutput',false);
             hf = cellfun(@(x) double(x >= threshold2), E_steps, 'UniformOutput',false);

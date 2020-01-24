@@ -3,12 +3,12 @@ addpath(genpath(fileparts(matlab.desktop.editor.getActiveFilename)));
 % 1 = LF, 2 = MF, 3 = HF
 % order:
 % 1x1, 2x2, 3x3, 1x2, 1x3, 2x1, 2x3, 3x1, 3x2
-fn = 'sim_level2_final_publish';
+fn = 'expSet3';
 linear = false;
-stepfinding = true; 
+stepfinding = true;
 use_weights = true;
-n_states = 3;
-degenerate = 0; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
+n_states = 2;
+degenerate = 2; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
 mcmc = true;
 timestep_factor = 1;
 if linear
@@ -24,37 +24,37 @@ end
 switch n_states
     case 3
         filenames = {[fn ext sf '_LF_x_LF.mcor'],...
-                     [fn ext sf '_MF_x_MF.mcor'],...
-                     [fn ext sf '_HF_x_HF.mcor'],...
-                     [fn ext sf '_LF_x_MF.mcor'],...
-                     [fn ext sf '_LF_x_HF.mcor'],...
-                     [fn ext sf '_MF_x_LF.mcor'],...
-                     [fn ext sf '_MF_x_HF.mcor'],...
-                     [fn ext sf '_HF_x_LF.mcor'],...
-                     [fn ext sf '_HF_x_MF.mcor']...
-                     };
+            [fn ext sf '_MF_x_MF.mcor'],...
+            [fn ext sf '_HF_x_HF.mcor'],...
+            [fn ext sf '_LF_x_MF.mcor'],...
+            [fn ext sf '_LF_x_HF.mcor'],...
+            [fn ext sf '_MF_x_LF.mcor'],...
+            [fn ext sf '_MF_x_HF.mcor'],...
+            [fn ext sf '_HF_x_LF.mcor'],...
+            [fn ext sf '_HF_x_MF.mcor']...
+            };
     case 2
         if stepfinding
-            filenames = {[fn ext sf '_LF_x_LF.mcor'],...                    
-                         [fn ext sf '_HF_x_HF.mcor'],...
-                         [fn ext sf '_LF_x_HF.mcor'],...
-                         [fn ext sf '_HF_x_LF.mcor'],...
-                         };
+            filenames = {[fn ext sf '_LF_x_LF.mcor'],...
+                [fn ext sf '_HF_x_HF.mcor'],...
+                [fn ext sf '_LF_x_HF.mcor'],...
+                [fn ext sf '_HF_x_LF.mcor'],...
+                };
         else
             %default to color-FCS
-            filenames = {[fn ext '_Idd_x_Idd.mcor'],...                    
-                         [fn ext '_Ida_x_Ida.mcor'],...
-                         [fn ext '_Idd_x_Ida.mcor'],...
-                         [fn ext '_Ida_x_Idd.mcor'],...
-                         };
+            filenames = {[fn ext '_Idd_x_Idd.mcor'],...
+                [fn ext '_Ida_x_Ida.mcor'],...
+                [fn ext '_Idd_x_Ida.mcor'],...
+                [fn ext '_Ida_x_Idd.mcor'],...
+                };
         end
 end
- filenames = cellfun(@(x) [fn '_results' filesep x],filenames,'UniformOutput',false);
- 
- Cor_Times = [];
- Cor_Average = [];
- Cor_SEM = [];
- for i = 1:numel(filenames)
+filenames = cellfun(@(x) [fn '_results' filesep x],filenames,'UniformOutput',false);
+
+Cor_Times = [];
+Cor_Average = [];
+Cor_SEM = [];
+for i = 1:numel(filenames)
     d = load(filenames{i},'-mat');
     if i == 1 || numel(d.Cor_Times) == size(Cor_Times,1)
         Cor_Times(:,end+1) = d.Cor_Times;
@@ -68,97 +68,132 @@ end
         Cor_Average(1:numel(d.Cor_Average),end) = d.Cor_Average;
         Cor_SEM(1:numel(d.Cor_SEM),end) = d.Cor_SEM;
     end
- end
- t = Cor_Times(:,1)*timestep_factor;
- valid = t < 150;
- t = t(valid);
- Cor_Average = Cor_Average(valid,:);
- Cor_SEM = Cor_SEM(valid,:);
- if ~use_weights
-     Cor_SEM = ones(size(Cor_SEM));
- end
- 
- discard_first_point = false;
- if discard_first_point
-     t = t(2:end);
-     Cor_Average = Cor_Average(2:end,:);
-     Cor_SEM = Cor_SEM(2:end,:);
- end
- 
- switch n_states
-     case 3
-         % initial rates
-         k0 = rand(1,6)/10;
-         lb = zeros(size(k0)); ub = 100*ones(size(k0));
-         use_offset = false;
-         if use_offset
-             k0 = [k0, zeros(1,9)];
-             lb = [lb (-1)*ones(1,9)];
-             ub = [ub ones(1,9)];
-         end
-     case 2
-         % initial rates
-         k0 = rand(1,2);
-         lb = zeros(size(k0)); ub = 100*ones(1,2);
-         use_offset = false;
-         if use_offset
-             k0 = [k0, zeros(1,4)];
-             lb = [lb (-1)*ones(1,4)];
-             ub = [ub ones(1,4)];
-         end         
- end
+end
+t = Cor_Times(:,1)*timestep_factor;
+valid = t < 1000;
+t = t(valid);
+Cor_Average = Cor_Average(valid,:);
+Cor_SEM = Cor_SEM(valid,:);
+if ~use_weights
+    Cor_SEM = ones(size(Cor_SEM));
+end
+
+discard_first_point = false;
+if discard_first_point
+    t = t(2:end);
+    Cor_Average = Cor_Average(2:end,:);
+    Cor_SEM = Cor_SEM(2:end,:);
+end
 
 switch n_states
-     case 3
+    case 3
+        % initial rates
+        k0 = rand(1,6)/10;
+        lb = zeros(size(k0)); ub = 100*ones(size(k0));
+        use_offset = true;
+        if use_offset
+            k0 = [k0, zeros(1,9)];
+            lb = [lb (-1)*ones(1,9)];
+            ub = [ub ones(1,9)];
+        end
+    case 2
+        % initial rates
+        k0 = rand(1,2);
+        lb = zeros(size(k0)); ub = 100*ones(1,2);
+        use_offset = false;
+        if use_offset
+            k0 = [k0, zeros(1,4)];
+            lb = [lb (-1)*ones(1,4)];
+            ub = [ub ones(1,4)];
+        end
+end
+
+switch n_states
+    case 3
         fun = @(x,method) FCS_three_state_kinetics(x,t,Cor_Average,Cor_SEM,method);
-     case 2
-         if stepfinding
-             if ~degenerate
+    case 2
+        if stepfinding
+            if ~degenerate
                 fun = @(x,method) FCS_two_state_kinetics_fFCS(x,t,Cor_Average,Cor_SEM,method);
-             else % consider that states are degenerate
-                 switch degenerate
-                     case 1
-                         % try 1 exp fit
-                         k0 = 0.1*ones(1,3);
-                         lb = zeros(1,3);
-                         ub = inf(1,3);
-                         fun = @(x,method) FCS_two_state_kinetics_fFCS_oneexp(x,t,Cor_Average,Cor_SEM,method);
-                     case 2
-                         % try 2 exp fit
-                         k0 = 0.1*ones(1,7);
-                         lb = zeros(1,7);
-                         ub = inf(1,7);
-                         fun = @(x,method) FCS_two_state_kinetics_fFCS_biexp(x,t,Cor_Average,Cor_SEM,method);
-                     case 3
-                         % try 3 exp fit
-                         k0 = [1,5,10,ones(1,8)];;
-                         lb = zeros(1,11);
-                         ub = inf(1,11);
-                         fun = @(x,method) FCS_two_state_kinetics_fFCS_threeexp(x,t,Cor_Average,Cor_SEM,method);
-                     case 4
-                         % try 4 exp fit
-                         k0 = 0.1*ones(1,15);
-                         lb = zeros(1,15);
-                         ub = inf(1,15);
-                         fun = @(x,method) FCS_two_state_kinetics_fFCS_fourexp(x,t,Cor_Average,Cor_SEM,method);
-                 end
-             end
-         else %default to colorFCS
-            fitE = false;
-            if fitE
-                fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,0,0,t,Cor_Average,Cor_SEM,method);
-                k0 = [k0,rand(1,2)]; lb = [lb,0,0]; ub = [ub,1,1];
-            else
-                %E1 = 0.31; E2 = 0.70;
-                %E1 = 0.24; E2 = 0.72;
-                E1 = 0.18; E2 = 0.73;
-                fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,E1,E2,t,Cor_Average,Cor_SEM,method);
+            else % consider that states are degenerate
+                switch degenerate
+                    case 1
+                        % try 1 exp fit
+                        k0 = 0.1*ones(1,3);
+                        lb = zeros(1,3);
+                        ub = inf(1,3);
+                        fun = @(x,method) FCS_two_state_kinetics_fFCS_oneexp(x,t,Cor_Average,Cor_SEM,method);
+                    case 2
+                        % try 2 exp fit
+                        k0 = 0.1*ones(1,7);
+                        lb = zeros(1,7);
+                        ub = inf(1,7);
+                        fun = @(x,method) FCS_two_state_kinetics_fFCS_biexp(x,t,Cor_Average,Cor_SEM,method);
+                    case 3
+                        % try 3 exp fit
+                        k0 = [1,5,10,ones(1,8)];;
+                        lb = zeros(1,11);
+                        ub = inf(1,11);
+                        fun = @(x,method) FCS_two_state_kinetics_fFCS_threeexp(x,t,Cor_Average,Cor_SEM,method);
+                    case 4
+                        % try 4 exp fit
+                        k0 = 0.1*ones(1,15);
+                        lb = zeros(1,15);
+                        ub = inf(1,15);
+                        fun = @(x,method) FCS_two_state_kinetics_fFCS_fourexp(x,t,Cor_Average,Cor_SEM,method);
+                end
             end
-         end
+        else %default to colorFCS
+            if ~degenerate
+                fitE = false;
+                if fitE
+                    fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,0,0,t,Cor_Average,Cor_SEM,method);
+                    k0 = [k0,rand(1,2)]; lb = [lb,0,0]; ub = [ub,1,1];
+                else
+                    %E1 = 0.31; E2 = 0.70;
+                    %E1 = 0.24; E2 = 0.72;
+                    E1 = 0.18; E2 = 0.73;
+                    fun = @(x,method) FCS_two_state_kinetics_colorFCS(x,E1,E2,t,Cor_Average,Cor_SEM,method);
+                end
+            else % consider that states are degenerate
+                switch degenerate
+                    case 1
+                        % try 1 exp fit
+                        k0 = 0.1*ones(1,3);
+                        lb = zeros(1,3);
+                        ub = inf(1,3);
+                        fun = @(x,method) FCS_two_state_kinetics_fFCS_oneexp(x,t,Cor_Average,Cor_SEM,method);
+                    case 2
+                        % try 2 exp fit
+                        k0 = [10,100,ones(1,5)];
+                        lb = zeros(1,7);
+                        ub = inf(1,7);
+                        offset = true;
+                        if offset
+                            k0 = [k0,zeros(1,4)];
+                            lb = [lb,-inf(1,4)];
+                            ub = [ub,inf(1,4)];
+                        end
+                        fun = @(x,method) FCS_two_state_kinetics_fFCS_biexp(x,t,Cor_Average,Cor_SEM,method);
+                    case 3
+                        % try 3 exp fit
+                        k0 = [1,5,10,ones(1,8)];
+                        lb = zeros(1,11);
+                        ub = inf(1,11);
+                        fun = @(x,method) FCS_two_state_kinetics_fFCS_threeexp(x,t,Cor_Average,Cor_SEM,method);
+                    case 4
+                        % try 4 exp fit
+                        k0 = 0.1*ones(1,15);
+                        lb = zeros(1,15);
+                        ub = inf(1,15);
+                        fun = @(x,method) FCS_two_state_kinetics_fFCS_fourexp(x,t,Cor_Average,Cor_SEM,method);
+                end
+            end
+        end
 end
 method = 1;
 switch method
-     case 1 % lsqnonlin
+    case 1 % lsqnonlin
         % first fit simplex
         options = optimset('MaxFunEvals',1E7,'MaxIter',1E7);
         k = fminsearchbnd(@(x) fun(x,2),k0,lb,ub,options);
@@ -174,7 +209,7 @@ switch method
         options = optimset('MaxIter',1);
         [k,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(@(x) fun(x,1),k,lb,ub,options);
         % get error from nlparci
-        ci = nlparci(k,residual,'jacobian',jacobian);   
+        ci = nlparci(k,residual,'jacobian',jacobian);
         ci = (ci(:,2)-ci(:,1))/2;
 end
 

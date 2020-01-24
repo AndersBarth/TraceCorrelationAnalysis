@@ -1,24 +1,28 @@
 %%% perform Gaussian fitting of FRET histogram
 stepfinding = false;
-save_figures = false;
-fn = 'sim_level3_final_publish';
+save_figures = true;
+fn = 'expSet3';
 load([fn '.mat']);
 if stepfinding
     load([fn '_results' filesep fn '_eff_steps.mat']);
 end
-n = 3;
+n = 5;
 if stepfinding
     E = eff_steps; % assume that we just analyzed the dataset
 else
     E = vertcat(E{:});
 end
 
-n_comp = 4;
+n_comp = 6;
 fits = cell(n_comp,1);
 BIC = zeros(n_comp,1); AIC = BIC;
 opt = statset('MaxIter',1E5);
 for i = 1:n_comp % consider up to four states
-    fits{i} = fitgmdist(E,i,'Options',opt);
+
+    S.mu = linspace(0,1,i)';
+    S.Sigma = repmat(0.1^2,1,1,i);
+    
+    fits{i} = fitgmdist(E,i,'Start',S,'Options',opt);
     BIC(i) = fits{i}.BIC;
     AIC(i) = fits{i}.AIC;
 end
@@ -50,13 +54,27 @@ else
         plot([1/3,1/3],[0,max(h)],'--','LineWidth',2,'Color',color(1,:));
         plot([2/3,2/3],[0,max(h)],'--','LineWidth',2,'Color',color(2,:));
     end
+    p = pdf(fits{n},bins'); p = numel(E).*p./sum(p);
+    plot(bins,p,'LineWidth',2,'Color',[0,0,0]);
+    %%% add individual populations
+    if n > 1
+        mu = fits{n}.mu;
+        sigma = fits{n}.Sigma;
+        amp = fits{n}.ComponentProportion';
+        for i = 1:n
+            p_ind = pdf(gmdistribution(mu(i),sigma(i)),bins');
+            p_ind = numel(E).*amp(i).*p_ind./sum(p_ind);
+            plot(bins,p_ind,'--','LineWidth',2,'Color',[0.25,0.25,0.25]);
+        end
+        sigma = sqrt(squeeze(sigma));
+    end
 end
 xlabel('FRET efficiency, E');
 ylabel('Occurrence');
 set(gca,'Box','on','FontSize',20,'LineWidth',2,'Layer','top');
 axis('tight');
 
-if ~stepfinding  
+if ~stepfinding
     ax = gca; ax.Position(4) = .7;
     ax_res = axes('Position',ax.Position,'Box','on','FontSize',20,'LineWidth',2,'Layer','top');
 

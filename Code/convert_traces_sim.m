@@ -1,4 +1,4 @@
-function convert_traces()
+function convert_traces_sim()
 
 folder = 'sim_level3_final_publish';
 % load all trace_X.txt files
