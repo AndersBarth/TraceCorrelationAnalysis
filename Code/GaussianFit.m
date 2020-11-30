@@ -1,7 +1,7 @@
 %%% perform Gaussian fitting of FRET histogram
-stepfinding = false;
-save_figures = true;
-fn = 'expSet3';
+stepfinding = true;
+save_figures = false;
+fn = 'Traces EG 10ms';
 load([fn '.mat']);
 if stepfinding
     load([fn '_results' filesep fn '_eff_steps.mat']);

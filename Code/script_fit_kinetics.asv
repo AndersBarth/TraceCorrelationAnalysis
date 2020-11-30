@@ -8,7 +8,7 @@ linear = false;
 stepfinding = false;
 use_weights = true;
 n_states = 2;
-degenerate = 3; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
+degenerate = 2; % degenerate, i.e. 2 FRET efficiencies, but 4 states. Specifiy as the number of exponentials for empirical model
 mcmc = false;
 timestep_factor = 1;
 if linear
@@ -176,7 +176,7 @@ switch n_states
                         % try 2 exp fit
                         k0 = [10,100,ones(1,6)];
                         lb = zeros(1,8);
-                        ub = inf(1,8);
+                        ub = inf(1,7);
                         offset = true;
                         if offset
                             k0 = [k0,zeros(1,4)];
@@ -189,12 +189,6 @@ switch n_states
                         k0 = [0.1,10,100,ones(1,10)];
                         lb = zeros(1,13);
                         ub = inf(1,13);
-                        offset = true;
-                        if offset
-                            k0 = [k0,zeros(1,4)];
-                            lb = [lb,-inf(1,4)];
-                            ub = [ub,inf(1,4)];
-                        end
                         fun = @(x,method) FCS_two_state_kinetics_FRETFCS_threeexp(x,t,Cor_Average,Cor_SEM,method);
                     case 4
                         % try 4 exp fit

@@ -1,7 +1,7 @@
 function convert_traces_exp()
 
-folder = 'expSet3';
-fn_root = 'Mov017-2016-07-07.traces_tr';
+folder = 'Traces EG 1ms';
+fn_root = '';
 % load all trace_X.txt files
 time = {};
 Idd = {};
@@ -10,7 +10,11 @@ E = {};
 try
     for i = 1:1000
         try
-            dat = dlmread([folder filesep sprintf([fn_root '%.3d.dat'],i)]);
+            try
+                dat = dlmread([folder filesep sprintf([fn_root '%.3d.dat'],i)]);
+            catch
+                dat = dlmread([folder filesep sprintf([fn_root '%.3d.txt'],i)]);
+            end
             time{end+1,1} = dat(:,1)-dat(1,1);
             Idd{end+1,1} = dat(:,2);
             Ida{end+1,1} = dat(:,3);

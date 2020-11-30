@@ -1,7 +1,7 @@
 %% load dataset
-filename = 'expSet2';
-n_states = 3;
-time_res = 0.1;
+filename = 'Traces EG 1ms';
+n_states = 2;
+time_res = 0.001;
 step_finding = true;
 linear = false;
 
@@ -32,7 +32,10 @@ if step_finding
     for i = 1:numel(E)
         %disp(sprintf('Processing trace %d\n',i));
         try % stepfinding sometimes failes
-            E_steps{i} = stepfit1_alvaro(E{i},'outputnoise',0.08)'; % outputnoise should be estimated from gaussian fitting
+            valid = ~isnan(E{i});
+            temp = stepfit1_alvaro(E{i}(valid),'outputnoise',0.08)'; % outputnoise should be estimated from gaussian fitting
+            E_steps{i} = NaN(size(E{i}));
+            E_step{i}(valid) = temp;
         end
     end
     E_steps = E_steps(~cellfun(@isempty,E_steps));

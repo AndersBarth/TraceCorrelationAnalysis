@@ -1,4 +1,4 @@
-function [w_res,C] = FCS_two_state_kinetics_fFCS(rates,E1,E2,t,cor,sem,method)
+function [w_res,C] = FCS_two_state_kinetics_colorFCS(rates,E1,E2,t,cor,sem,method)
     k12 = rates(1);
     k21 = rates(2);
     % two state filtered FCS model function
